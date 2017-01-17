@@ -1,0 +1,40 @@
+#!/bin/bash
+
+###################################################
+# Extracts text out of a range of commit messages #
+###################################################
+
+function show_usage_and_exit {
+  echo 'Usage: extract-commit-message regexp[ression] SHA1...SHA2 [../path/to/git/repo]';
+  exit 1;
+}
+
+REGEXP=$1
+COMMIT_RANGE=$2
+# Default to CWD if no arg is paszed
+GIT_DIRECTORY=$3 && [ -z "$GIT_DIRECTORY" -a "${GIT_DIRECTORY+xxx}" = "xxx" ] && GIT_DIRECTORY="$(dirname "$0")"
+
+# Change to git directory
+cd $GIT_DIRECTORY;
+
+if [ -z "$REGEXP" -a "${REGEXP+xxx}" = "xxx" ]; then
+  show_usage_and_exit;
+fi
+
+if [ ! -d "$GIT_DIRECTORY" ]; then
+  show_usage_and_exit;
+fi
+
+if [ -z "$COMMIT_RANGE" -a "${COMMIT_RANGE+xxx}" = "xxx" ]; then
+  show_usage_and_exit;
+fi
+
+if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+  echo 'Not a git repository.';
+  show_usage_and_exit;
+fi
+
+COMMIT_LOG=`git log $COMMIT_RANGE`;
+MATCHES=$(egrep -o $REGEXP <<< "$COMMIT_LOG")
+
+echo "$MATCHES"
